@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cash Flow Minimizer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Cash Flow Minimizer</h1>
+
+    <form id="transactionForm" action="/minimize_cash_flow/" method="GET">
+        <label for="debtor">Debtor Name:</label>
+        <input type="text" id="debtor" name="debtor" required>
+
+        <label for="creditor">Creditor Name:</label>
+        <input type="text" id="creditor" name="creditor" required>
+
+        <label for="amount">Amount:</label>
+        <input type="number" id="amount" name="amount" required min="0">
+
+        <button type="submit">Add Transaction</button>
+    </form>
+
+    <h2>Transactions</h2>
+    <table id="transactionTable">
+        <thead>
+            <tr>
+                <th>Debtor</th>
+                <th>Creditor</th>
+                <th>Amount</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <button id="minimizeButton">Minimize Cash Flow</button>
+
+    <div id="result"></div>
+
+</div>
+
+<script>
+const transactionTableBody = document.querySelector('#transactionTable tbody');
+let transactions = [];
+
+document.getElementById('transactionForm').onsubmit = function(event) {
+    event.preventDefault();
+
+    const debtor = document.getElementById('debtor').value.trim();
+    const creditor = document.getElementById('creditor').value.trim();
+    const amount = parseFloat(document.getElementById('amount').value);
+
+    transactions.push({ debtor, creditor, amount });
+
+    // Add to table
+    const row = transactionTableBody.insertRow();
+    row.insertCell(0).innerText = debtor;
+    row.insertCell(1).innerText = creditor;
+    row.insertCell(2).innerText = amount.toFixed(2);
+    
+    const deleteCell = row.insertCell(3);
+    deleteCell.innerHTML = '<button class="deleteButton">Delete</button>';
+    
+    // Clear form fields
+    document.getElementById('transactionForm').reset();
+    
+    // Add delete functionality
+    deleteCell.querySelector('.deleteButton').onclick = function() {
+        transactionTableBody.deleteRow(row.rowIndex - 1);
+        transactions.splice(transactions.indexOf({ debtor, creditor, amount }), 1);
+    };
+};
+
+document.getElementById('minimizeButton').onclick = function() {
+    if (transactions.length === 0) {
+        alert("No transactions to minimize.");
+        return;
+    }
+
+    // Construct query string for GET request
+    const persons = [...new Set(transactions.flatMap(t => [t.debtor, t.creditor]))];
+    
+    let queryString = `?persons=${encodeURIComponent(JSON.stringify(persons))}&transactions=${encodeURIComponent(JSON.stringify(transactions))}`;
+    
+    // Redirect to minimize_cash_flow view with query parameters
+    window.location.href = '/minimize_cash_flow/' + queryString;
+};
+</script>
+
+</body>
+</html>

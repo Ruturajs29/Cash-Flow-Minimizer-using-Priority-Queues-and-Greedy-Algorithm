@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimized Cash Flow Results</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.20.0/cytoscape.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1, h3 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        #result {
+            width: 80%;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        li:last-child {
+            border-bottom: none;
+        }
+        li span {
+            font-weight: bold;
+            color: #007BFF;
+        }
+        #cy {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #ddd;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #toggleOriginal {
+            background-color: #007bff;
+            color: white;
+        }
+        #toggleMinimized {
+            background-color: #28a745;
+            color: white;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .button-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Minimized Cash Flow Results</h1>
+
+<div id="result">
+    {% if result.minimized_transactions %}
+        <h3>Minimized Transactions</h3>
+        <ul>
+            {% for trans in result.minimized_transactions %}
+                <li><span>{{ trans.debtor }}</span> pays <span>Rs {{ trans.amount }}</span> to <span>{{ trans.creditor }}</span></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No minimized transactions available.</p>
+    {% endif %}
+    
+    <h3>Original Transactions</h3>
+    <ul>
+        {% for trans in result.original_transactions %}
+            <li><span>{{ trans.debtor }}</span> owes <span>{{ trans.creditor }}</span> Rs <span>{{ trans.amount }}</span></li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!-- Graph visualization -->
+<h3>Graph of Transactions</h3>
+<div id="cy"></div>
+
+<!-- Button container for toggling views -->
+<div class="button-container">
+    <button id="toggleOriginal">Show Original Transactions</button>
+    <button id="toggleMinimized">Show Minimized Transactions</button>
+</div>
+
+<script>
+    // Function to initialize cytoscape graph
+    function initGraph(edges, nodes) {
+        return cytoscape({
+            container: document.getElementById('cy'),
+            elements: {
+                nodes: nodes,
+                edges: edges
+            },
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'background-color': '#66bb6a',
+                        'label': 'data(id)',
+                        'font-size': '14px',
+                        'color': '#fff',
+                        'text-outline-width': 2,
+                        'text-outline-color': '#66bb6a',
+                        'width': '60px',
+                        'height': '60px',
+                        'border-width': 3,
+                        'border-color': '#4caf50'
+                    }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'width': 5,
+                        'line-color': '#007bff',
+                        'target-arrow-color': '#007bff',
+                        'target-arrow-shape': 'triangle',
+                        'curve-style': 'bezier',
+                        'label': 'data(label)',
+                        'font-size': '14px',
+                        'text-background-color': '#fff',
+                        'text-background-opacity': 1,
+                        'text-border-color': '#000',
+                        'text-border-width': 1,
+                        'text-border-opacity': 0.7,
+                        'opacity': 0.8
+                    }
+                }
+            ],
+            layout: {
+                name: 'circle',
+                padding: 10
+            }
+        });
+    }
+
+    // Initialize the graph with original transactions
+    var cy = initGraph(
+        {{ result.graph_data.original_edges|safe }},
+        {{ result.graph_data.nodes|safe }}
+    );
+
+    // Function to update the graph with new edges
+    function updateGraph(edges) {
+        cy.elements().remove();  // Clear the current graph
+        cy.add({{ result.graph_data.nodes|safe }});  // Re-add nodes
+        cy.add(edges);  // Add the new edges
+        cy.layout({ name: 'circle' }).run();  // Reapply layout
+    }
+
+    // Button to toggle to minimized transactions
+    document.getElementById('toggleMinimized').addEventListener('click', function() {
+        updateGraph({{ result.graph_data.minimized_edges|safe }});  // Use minimized edges
+    });
+
+    // Button to toggle back to original transactions
+    document.getElementById('toggleOriginal').addEventListener('click', function() {
+        updateGraph({{ result.graph_data.original_edges|safe }});  // Use original edges
+    });
+</script>
+
+</body>
+</html>
