@@ -31,8 +31,8 @@ Initially developed as a core **C++ project**, this application was later transf
    python manage.py runserver
    ```
 
-4. **Open the application in your browser:**  
-   [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+4. **Open the application in your browser using Localhost**  
+
 
 
 **Working Demo  :-**  
